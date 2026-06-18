@@ -22,6 +22,8 @@ interface BoardState {
   setColumns: (columns: ColumnWithTasks[]) => void;
 
   // Task actions
+  draggedTaskId: string | null;
+  setDraggedTaskId: (id: string | null) => void;
   addTask: (columnId: string, task: TaskWithLabels) => void;
   updateTask: (taskId: string, updates: Partial<TaskWithLabels>) => void;
   removeTask: (taskId: string) => void;
@@ -43,9 +45,11 @@ export const useBoardStore = create<BoardState>((set) => ({
   columns: [],
   labels: [],
   boardId: null,
+  draggedTaskId: null,
 
   setBoard: (boardId, columns, labels) => set({ boardId, columns, labels }),
   clearBoard: () => set({ columns: [], labels: [], boardId: null }),
+  setDraggedTaskId: (id) => set({ draggedTaskId: id }),
 
   addColumn: (column) =>
     set((state) => ({ columns: [...state.columns, column] })),
@@ -84,14 +88,51 @@ export const useBoardStore = create<BoardState>((set) => ({
     })),
 
   updateTask: (taskId, updates) =>
-    set((state) => ({
-      columns: state.columns.map((col) => ({
-        ...col,
-        tasks: col.tasks.map((t) =>
-          t.id === taskId ? { ...t, ...updates } : t
-        ),
-      })),
-    })),
+    set((state) => {
+      const currentCol = state.columns.find((c) =>
+        c.tasks.some((t) => t.id === taskId)
+      );
+      if (!currentCol) return state;
+
+      const task = currentCol.tasks.find((t) => t.id === taskId)!;
+      const updatedTask = { ...task, ...updates };
+      const targetColumnId = updatedTask.column_id;
+
+      return {
+        columns: state.columns.map((col) => {
+          if (currentCol.id !== targetColumnId) {
+            if (col.id === currentCol.id) {
+              return {
+                ...col,
+                tasks: col.tasks.filter((t) => t.id !== taskId),
+              };
+            }
+            if (col.id === targetColumnId) {
+              const newTasks = [...col.tasks, updatedTask];
+              newTasks.sort((a, b) => a.position - b.position);
+              return {
+                ...col,
+                tasks: newTasks,
+              };
+            }
+          } else {
+            if (col.id === currentCol.id) {
+              const newTasks = col.tasks.map((t) =>
+                t.id === taskId ? updatedTask : t
+              );
+              if (updates.position !== undefined) {
+                newTasks.sort((a, b) => a.position - b.position);
+              }
+              return {
+                ...col,
+                tasks: newTasks,
+              };
+            }
+          }
+          return col;
+        }),
+      };
+    }),
 
   removeTask: (taskId) =>
     set((state) => ({

@@ -6,7 +6,7 @@ import { useBoardStore } from "@/store/boardStore";
 import type { Column, Task } from "@/types";
 
 export function useRealtimeBoard(boardId: string | null) {
-  const { addColumn, removeColumn, setColumns, columns, addTask, updateTask, removeTask } =
+  const { addColumn, removeColumn, setColumns, addTask, removeTask } =
     useBoardStore();
 
   useEffect(() => {
@@ -28,7 +28,6 @@ export function useRealtimeBoard(boardId: string | null) {
         (payload) => {
           if (payload.eventType === "INSERT") {
             const newCol = payload.new as Column;
-            // Only add if not already in store (avoid duplicate from own action)
             const exists = useBoardStore
               .getState()
               .columns.find((c) => c.id === newCol.id);
@@ -70,7 +69,6 @@ export function useRealtimeBoard(boardId: string | null) {
           if (payload.eventType === "INSERT") {
             const newTask = payload.new as Task;
             if (columnIds.includes(newTask.column_id)) {
-              // Check if task already exists
               const exists = currentColumns
                 .flatMap((c) => c.tasks)
                 .find((t) => t.id === newTask.id);
@@ -80,7 +78,22 @@ export function useRealtimeBoard(boardId: string | null) {
             }
           } else if (payload.eventType === "UPDATE") {
             const updatedTask = payload.new as Task;
-            if (columnIds.includes(updatedTask.column_id)) {
+            if (!columnIds.includes(updatedTask.column_id)) {
+              const { removeTask } = useBoardStore.getState();
+              removeTask(updatedTask.id);
+              return;
+            }
+
+            const { columns: cols, updateTask, addTask } = useBoardStore.getState();
+            const currentCol = cols.find((c) =>
+              c.tasks.some((t) => t.id === updatedTask.id)
+            );
+
+            if (!currentCol) {
+              addTask(updatedTask.column_id, { ...updatedTask, labels: [] });
+            } else {
+              const { draggedTaskId } = useBoardStore.getState();
+              if (draggedTaskId === updatedTask.id) return;
               updateTask(updatedTask.id, updatedTask);
             }
           } else if (payload.eventType === "DELETE") {
@@ -95,5 +108,6 @@ export function useRealtimeBoard(boardId: string | null) {
       supabase.removeChannel(columnsChannel);
       supabase.removeChannel(tasksChannel);
     };
-  }, [boardId, addColumn, removeColumn, setColumns, addTask, updateTask, removeTask, columns]);
+  // Stable store action refs + boardId only — never re-subscribe on column/task data changes
+  }, [boardId, addColumn, removeColumn, setColumns, addTask, removeTask]);
 }

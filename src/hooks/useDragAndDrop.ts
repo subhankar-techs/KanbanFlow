@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   DragStartEvent,
   DragOverEvent,
@@ -16,12 +16,13 @@ import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useBoardStore } from "@/store/boardStore";
 import * as taskService from "@/services/taskService";
 import * as columnService from "@/services/columnService";
-import type { TaskWithLabels } from "@/types";
+import type { TaskWithLabels, ColumnWithTasks } from "@/types";
 
 export function useDragAndDrop() {
-  const { columns, moveTask, reorderTasks, reorderColumns } = useBoardStore();
+  const { moveTask, reorderTasks, reorderColumns, setColumns, setDraggedTaskId } = useBoardStore();
   const [activeTask, setActiveTask] = useState<TaskWithLabels | null>(null);
   const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
+  const dragStartColumnsSnapshot = useRef<ColumnWithTasks[] | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -46,15 +47,19 @@ export function useDragAndDrop() {
       const activeData = active.data.current;
 
       if (activeData?.type === "task") {
+        const columns = useBoardStore.getState().columns;
+        dragStartColumnsSnapshot.current = columns;
+
         const task = columns
           .flatMap((c) => c.tasks)
           .find((t) => t.id === active.id);
         setActiveTask(task ?? null);
+        setDraggedTaskId(active.id as string);
       } else if (activeData?.type === "column") {
         setActiveColumnId(active.id as string);
       }
     },
-    [columns]
+    [setDraggedTaskId]
   );
 
   const handleDragOver = useCallback(
@@ -67,17 +72,16 @@ export function useDragAndDrop() {
 
       if (activeData?.type !== "task") return;
 
-      const activeColumnId = activeData?.columnId as string;
-      const overColumnId =
-        overData?.type === "column"
-          ? (over.id as string)
-          : (overData?.columnId as string);
+      const currentColumns = useBoardStore.getState().columns;
+      const activeTaskColumn = currentColumns.find((c) =>
+        c.tasks.some((t) => t.id === active.id)
+      );
+      const fromColumnId = activeTaskColumn?.id;
+      const toColumnId = overData?.columnId as string;
 
-      if (!activeColumnId || !overColumnId) return;
-      if (activeColumnId === overColumnId) return;
+      if (!fromColumnId || !toColumnId || fromColumnId === toColumnId) return;
 
-      // Moving task to a different column
-      const overColumn = columns.find((c) => c.id === overColumnId);
+      const overColumn = currentColumns.find((c) => c.id === toColumnId);
       if (!overColumn) return;
 
       const overIndex =
@@ -85,9 +89,9 @@ export function useDragAndDrop() {
           ? overColumn.tasks.findIndex((t) => t.id === over.id)
           : overColumn.tasks.length;
 
-      moveTask(active.id as string, activeColumnId, overColumnId, overIndex);
+      moveTask(active.id as string, fromColumnId, toColumnId, overIndex);
     },
-    [columns, moveTask]
+    [moveTask]
   );
 
   const handleDragEnd = useCallback(
@@ -95,58 +99,98 @@ export function useDragAndDrop() {
       const { active, over } = event;
       setActiveTask(null);
       setActiveColumnId(null);
+      setDraggedTaskId(null);
 
-      if (!over) return;
+      if (!over) {
+        if (dragStartColumnsSnapshot.current) {
+          setColumns(dragStartColumnsSnapshot.current);
+        }
+        return;
+      }
 
       const activeData = active.data.current;
       const overData = over.data.current;
 
       if (activeData?.type === "task") {
-        const overColumnId =
-          overData?.type === "column"
-            ? (over.id as string)
-            : (overData?.columnId as string);
+        const overColumnId = overData?.columnId as string;
 
-        if (!overColumnId) return;
+        if (!overColumnId) {
+          if (dragStartColumnsSnapshot.current) {
+            setColumns(dragStartColumnsSnapshot.current);
+          }
+          return;
+        }
+
+        const originalCol = dragStartColumnsSnapshot.current?.find((c) =>
+          c.tasks.some((t) => t.id === active.id)
+        );
+        const originalColumnId = originalCol?.id;
 
         const currentColumns = useBoardStore.getState().columns;
-        const column = currentColumns.find((c) => c.id === overColumnId);
-        if (!column) return;
+        const finalCol = currentColumns.find((c) =>
+          c.tasks.some((t) => t.id === active.id)
+        );
+        const finalColumnId = finalCol?.id;
 
-        // If same column, handle reorder
-        if (activeData.columnId === overColumnId && active.id !== over.id) {
-          const taskIds = column.tasks.map((t) => t.id);
-          const oldIndex = taskIds.indexOf(active.id as string);
-          const newIndex = taskIds.indexOf(over.id as string);
+        if (!originalColumnId || !finalColumnId) return;
 
-          if (oldIndex !== -1 && newIndex !== -1) {
-            const reordered = [...taskIds];
-            reordered.splice(oldIndex, 1);
-            reordered.splice(newIndex, 0, active.id as string);
-            reorderTasks(overColumnId, reordered);
+        const isCrossColumn = originalColumnId !== finalColumnId;
 
-            // Persist to DB
-            try {
-              await taskService.reorderTasks(
-                overColumnId,
-                reordered.map((id, i) => ({ id, position: i }))
-              );
-            } catch (error) {
-              console.error("Failed to reorder tasks:", error);
+        if (!isCrossColumn) {
+          if (active.id !== over.id && finalCol) {
+            const taskIds = finalCol.tasks.map((t) => t.id);
+            const oldIndex = taskIds.indexOf(active.id as string);
+            const newIndex = overData?.type === "task"
+              ? taskIds.indexOf(over.id as string)
+              : taskIds.length - 1;
+
+            if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+              const reordered = [...taskIds];
+              reordered.splice(oldIndex, 1);
+              reordered.splice(newIndex, 0, active.id as string);
+              reorderTasks(originalColumnId, reordered);
+
+              const updatedCol = useBoardStore.getState().columns.find((c) => c.id === originalColumnId);
+              if (updatedCol) {
+                try {
+                  const updates = updatedCol.tasks.map((t, idx) => ({
+                    id: t.id,
+                    column_id: originalColumnId,
+                    position: idx,
+                  }));
+                  await taskService.updateTaskPositions(updates);
+                } catch (error) {
+                  console.error("Failed to reorder tasks:", error);
+                  if (dragStartColumnsSnapshot.current) {
+                    setColumns(dragStartColumnsSnapshot.current);
+                  }
+                }
+              }
             }
           }
-        } else if (activeData.columnId !== overColumnId || column.tasks.find((t) => t.id === active.id)) {
-          // Cross-column move — already handled in dragOver, persist to DB
-          const task = column.tasks.find((t) => t.id === active.id);
-          if (task) {
-            try {
-              await taskService.moveTask(
-                active.id as string,
-                overColumnId,
-                task.position
-              );
-            } catch (error) {
-              console.error("Failed to move task:", error);
+        } else {
+          const sourceCol = currentColumns.find((c) => c.id === originalColumnId);
+          const targetCol = currentColumns.find((c) => c.id === finalColumnId);
+
+          const updates: { id: string; column_id: string; position: number }[] = [];
+
+          if (sourceCol) {
+            sourceCol.tasks.forEach((t, idx) => {
+              updates.push({ id: t.id, column_id: originalColumnId, position: idx });
+            });
+          }
+          if (targetCol) {
+            targetCol.tasks.forEach((t, idx) => {
+              updates.push({ id: t.id, column_id: finalColumnId, position: idx });
+            });
+          }
+
+          try {
+            await taskService.updateTaskPositions(updates);
+          } catch (error) {
+            console.error("Failed to move task:", error);
+            if (dragStartColumnsSnapshot.current) {
+              setColumns(dragStartColumnsSnapshot.current);
             }
           }
         }
@@ -157,25 +201,26 @@ export function useDragAndDrop() {
           const oldIndex = columnIds.indexOf(active.id as string);
           const newIndex = columnIds.indexOf(over.id as string);
 
-          if (oldIndex !== -1 && newIndex !== -1) {
-            const reordered = [...columnIds];
-            reordered.splice(oldIndex, 1);
-            reordered.splice(newIndex, 0, active.id as string);
-            reorderColumns(reordered);
+          if (oldIndex === -1 || newIndex === -1) return;
 
-            try {
-              await columnService.reorderColumns(
-                currentColumns[0]?.board_id,
-                reordered.map((id, i) => ({ id, position: i }))
-              );
-            } catch (error) {
-              console.error("Failed to reorder columns:", error);
-            }
+          const reordered = [...columnIds];
+          reordered.splice(oldIndex, 1);
+          reordered.splice(newIndex, 0, active.id as string);
+          reorderColumns(reordered);
+
+          try {
+            await columnService.reorderColumns(
+              currentColumns[0]?.board_id,
+              reordered.map((id, i) => ({ id, position: i }))
+            );
+          } catch (error) {
+            console.error("Failed to reorder columns:", error);
+            reorderColumns(columnIds);
           }
         }
       }
     },
-    [columns, reorderTasks, reorderColumns]
+    [reorderTasks, reorderColumns, setColumns, setDraggedTaskId]
   );
 
   return {

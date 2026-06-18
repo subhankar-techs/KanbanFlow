@@ -8,6 +8,7 @@ import {
   moveTaskSchema,
   taskLabelsSchema,
   reorderColumnsSchema,
+  taskPositionsSchema,
 } from "@/lib/validations";
 
 function getSupabase() { return createClient(); }
@@ -136,6 +137,22 @@ export async function reorderTasks(
   const results = await Promise.all(updates);
   const error = results.find((r) => r.error)?.error;
   if (error) throw error;
+}
+
+/**
+ * Update multiple task positions and column assignments atomically using RPC
+ */
+export async function updateTaskPositions(
+  updates: { id: string; column_id: string; position: number }[]
+) {
+  const valid = validate(taskPositionsSchema, updates);
+
+  const { data, error } = await getSupabase().rpc("update_task_positions", {
+    payload: valid,
+  });
+
+  if (error) throw error;
+  return data;
 }
 
 /**

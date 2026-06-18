@@ -124,6 +124,15 @@ export const moveTaskSchema = z.object({
   position: z.number().int().min(0).max(10000),
 });
 
+export const taskPositionsSchema = z.array(
+  z.object({
+    id: uuid,
+    column_id: uuid,
+    position: z.number().int().min(0).max(10000),
+  })
+).max(10000);
+
+
 export const inviteMemberSchema = z.object({
   boardId: uuid,
   email: email,

@@ -86,17 +86,17 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                 <LayoutDashboard className="h-4 w-4 text-white" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-xl font-bold bg-linear-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
                 KanbanFlow
               </span>
             </div>
             <div className="flex items-center gap-3">
               {isSignedIn ? (
                 <Link href={ROUTES.DASHBOARD}>
-                  <Button className="text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg shadow-indigo-500/25">
+                  <Button className="text-sm bg-linear-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg shadow-indigo-500/25">
                     Dashboard
                     <ArrowRight className="ml-1 h-4 w-4" />
                   </Button>
@@ -109,7 +109,7 @@ export default function LandingPage() {
                     </Button>
                   </Link>
                   <Link href={ROUTES.SIGNUP}>
-                    <Button className="text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg shadow-indigo-500/25">
+                    <Button className="text-sm bg-linear-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg shadow-indigo-500/25">
                       Get Started
                       <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
@@ -125,9 +125,9 @@ export default function LandingPage() {
       <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         {/* Animated Background */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-indigo-400/20 to-purple-400/20 blur-3xl animate-float" />
-          <div className="absolute top-60 -left-40 w-80 h-80 rounded-full bg-gradient-to-br from-pink-400/15 to-rose-400/15 blur-3xl animate-float" style={{ animationDelay: "1s" }} />
-          <div className="absolute bottom-20 right-20 w-72 h-72 rounded-full bg-gradient-to-br from-cyan-400/15 to-blue-400/15 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
+          <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-linear-to-br from-indigo-400/20 to-purple-400/20 blur-3xl animate-float" />
+          <div className="absolute top-60 -left-40 w-80 h-80 rounded-full bg-linear-to-br from-pink-400/15 to-rose-400/15 blur-3xl animate-float" style={{ animationDelay: "1s" }} />
+          <div className="absolute bottom-20 right-20 w-72 h-72 rounded-full bg-linear-to-br from-cyan-400/15 to-blue-400/15 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
           {/* Grid pattern */}
           <div
             className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
@@ -159,7 +159,7 @@ export default function LandingPage() {
           >
             Organize your work
             <br />
-            <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
               beautifully
             </span>
           </h1>
@@ -184,7 +184,7 @@ export default function LandingPage() {
               <Link href={ROUTES.DASHBOARD}>
                 <Button
                   size="lg"
-                  className="h-12 px-8 text-base bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105"
+                  className="h-12 px-8 text-base bg-linear-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105"
                 >
                   Go to Dashboard
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -195,7 +195,7 @@ export default function LandingPage() {
                 <Link href={ROUTES.SIGNUP}>
                   <Button
                     size="lg"
-                    className="h-12 px-8 text-base bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105"
+                    className="h-12 px-8 text-base bg-linear-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105"
                   >
                     Start Exploring
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -260,7 +260,7 @@ export default function LandingPage() {
                 ].map((col, ci) => (
                   <div
                     key={ci}
-                    className="flex-1 min-w-[200px] rounded-xl bg-muted/50 p-3"
+                    className="flex-1 min-w-50 rounded-xl bg-muted/50 p-3"
                   >
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-semibold">{col.title}</span>
@@ -304,13 +304,13 @@ export default function LandingPage() {
               </div>
             </div>
             {/* Glow effect behind card */}
-            <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 blur-3xl -z-10 rounded-3xl" />
+            <div className="absolute -inset-4 bg-linear-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 blur-3xl -z-10 rounded-3xl" />
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 border-y border-border/50">
+      {/* <section className="py-16 px-4 sm:px-6 lg:px-8 border-y border-border/50">
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
           {stats.map((stat, i) => (
             <div key={i} className="text-center">
@@ -323,7 +323,7 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
 
       {/* Features Section */}
       <section className="py-24 px-4 sm:px-6 lg:px-8" id="features">
@@ -331,7 +331,7 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
               Everything you need to{" "}
-              <span className="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
                 stay productive
               </span>
             </h2>
@@ -348,7 +348,7 @@ export default function LandingPage() {
                 className="group relative rounded-2xl border border-border/50 bg-card p-6 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1"
               >
                 <div
-                  className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${feature.gradient} mb-4 shadow-lg`}
+                  className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br ${feature.gradient} mb-4 shadow-lg`}
                 >
                   <feature.icon className="h-6 w-6 text-white" />
                 </div>
@@ -368,7 +368,7 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
               Get started in{" "}
-              <span className="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
                 3 simple steps
               </span>
             </h2>
@@ -399,7 +399,7 @@ export default function LandingPage() {
               },
             ].map((item, i) => (
               <div key={i} className="relative text-center group">
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-primary/20 mb-4 group-hover:scale-110 transition-transform duration-300">
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-indigo-500/10 to-purple-500/10 border border-primary/20 mb-4 group-hover:scale-110 transition-transform duration-300">
                   <item.icon className="h-7 w-7 text-primary" />
                 </div>
                 <div className="text-xs font-bold text-primary mb-2">
@@ -416,7 +416,7 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="relative rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 p-12 sm:p-16 overflow-hidden">
+          <div className="relative rounded-3xl bg-linear-to-br from-indigo-500 via-purple-600 to-pink-500 p-12 sm:p-16 overflow-hidden">
             {/* Background pattern */}
             <div
               className="absolute inset-0 opacity-10"
@@ -453,7 +453,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+              <div className="h-7 w-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                 <LayoutDashboard className="h-3.5 w-3.5 text-white" />
               </div>
               <span className="font-bold bg-linear-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
