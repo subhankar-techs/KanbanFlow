@@ -197,7 +197,7 @@ export default function LandingPage() {
                     size="lg"
                     className="h-12 px-8 text-base bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105"
                   >
-                    Start Free — No Credit Card
+                    Start Exploring
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -439,7 +439,7 @@ export default function LandingPage() {
                   size="lg"
                   className="h-12 px-8 text-base bg-white text-indigo-600 hover:bg-white/90 border-0 shadow-xl hover:scale-105 transition-all duration-300"
                 >
-                  Get Started for Free
+                  Get Started
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -456,7 +456,7 @@ export default function LandingPage() {
               <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                 <LayoutDashboard className="h-3.5 w-3.5 text-white" />
               </div>
-              <span className="font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
+              <span className="font-bold bg-linear-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
                 KanbanFlow
               </span>
             </div>
