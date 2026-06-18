@@ -59,7 +59,7 @@ npm run start
 
 ## 🤖 AI Tools Used During Development
 
-- **Antigravity**: Google DeepMind's agentic AI coding assistant powered by **Gemini 3.5 Flash (High)**. Used for codebase research, directory exploration, component implementation alignment, structuring documentation, and setup refinement.
+- **Antigravity**: Google DeepMind's agentic AI coding assistant powered by **Claude Opus 4.6(Thinking)** **Gemini 3.5 Flash (High)**. Used for codebase research, directory exploration, component implementation alignment, structuring documentation, and setup refinement.
 - **GitHub Copilot**: Assisted with day-to-day code completion, suggestions, and inline edits.
 
 ---
