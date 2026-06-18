@@ -109,7 +109,8 @@ export function useDragAndDrop() {
 
         if (!overColumnId) return;
 
-        const column = columns.find((c) => c.id === overColumnId);
+        const currentColumns = useBoardStore.getState().columns;
+        const column = currentColumns.find((c) => c.id === overColumnId);
         if (!column) return;
 
         // If same column, handle reorder
@@ -134,7 +135,7 @@ export function useDragAndDrop() {
               console.error("Failed to reorder tasks:", error);
             }
           }
-        } else if (activeData.columnId !== overColumnId) {
+        } else if (activeData.columnId !== overColumnId || column.tasks.find((t) => t.id === active.id)) {
           // Cross-column move — already handled in dragOver, persist to DB
           const task = column.tasks.find((t) => t.id === active.id);
           if (task) {
@@ -151,7 +152,8 @@ export function useDragAndDrop() {
         }
       } else if (activeData?.type === "column") {
         if (active.id !== over.id) {
-          const columnIds = columns.map((c) => c.id);
+          const currentColumns = useBoardStore.getState().columns;
+          const columnIds = currentColumns.map((c) => c.id);
           const oldIndex = columnIds.indexOf(active.id as string);
           const newIndex = columnIds.indexOf(over.id as string);
 
@@ -163,7 +165,7 @@ export function useDragAndDrop() {
 
             try {
               await columnService.reorderColumns(
-                columns[0]?.board_id,
+                currentColumns[0]?.board_id,
                 reordered.map((id, i) => ({ id, position: i }))
               );
             } catch (error) {
