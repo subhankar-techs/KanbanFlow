@@ -15,7 +15,7 @@ export interface Database {
     Tables: {
       profiles: {
         Row: Profile;
-        Insert: Omit<Profile, "created_at">;
+        Insert: Omit<Profile, "created_at"> & { auth_provider?: 'email' | 'google' };
         Update: Partial<Omit<Profile, "id" | "created_at">>;
       };
       boards: {
@@ -72,6 +72,7 @@ export interface Profile {
   email: string;
   name: string | null;
   avatar_url: string | null;
+  auth_provider: 'email' | 'google';
   created_at: string;
 }
 

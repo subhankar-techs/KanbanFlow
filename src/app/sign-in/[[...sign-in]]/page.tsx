@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -8,6 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, Loader2 } from "lucide-react";
+import { GoogleButton } from "@/components/ui/google-button";
+
+// Maps URL error codes from auth callback to user-friendly messages
+const ERROR_MESSAGES: Record<string, string> = {
+  provider_conflict:
+    "This email is already registered with email/password. Please sign in using your password.",
+  google_conflict:
+    'This email is already registered with Google. Please use "Continue with Google" to sign in.',
+  auth_callback_failed:
+    "Authentication failed. Please try again.",
+  oauth_cancelled:
+    "Google sign-in was cancelled. Please try again.",
+};
 
 export default function SignInPage() {
   const router = useRouter();
@@ -16,22 +29,59 @@ export default function SignInPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ── Show errors redirected from OAuth callback ──
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const errorParam = params.get("error");
+    if (errorParam && ERROR_MESSAGES[errorParam]) {
+      setError(ERROR_MESSAGES[errorParam]);
+      // Clean up the URL without triggering a navigation
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const supabase = createClient();
 
-    if (error) {
-      setError(error.message);
+      // ── Check if email is registered via Google before attempting password login ──
+      const { data: providerData } = await supabase.rpc("get_provider_for_email", {
+        lookup_email: email,
+      });
+
+      if (providerData && providerData.length > 0 && providerData[0].auth_provider === "google") {
+        setError(
+          'This email is registered with Google. Please use "Continue with Google" to sign in.'
+        );
+        setLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        // Make common Supabase errors more user-friendly
+        if (error.message.includes("Invalid login credentials")) {
+          setError("Invalid email or password. Please try again.");
+        } else if (error.message.includes("Email not confirmed")) {
+          setError("Please verify your email address before signing in. Check your inbox.");
+        } else {
+          setError(error.message);
+        }
+        setLoading(false);
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Network error. Please check your connection and try again.");
       setLoading(false);
-      return;
     }
-
-    router.push("/dashboard");
-    router.refresh();
   };
 
   return (
@@ -54,6 +104,19 @@ export default function SignInPage() {
               {error}
             </div>
           )}
+
+          <div className="mb-4">
+            <GoogleButton onError={(msg) => setError(msg)} />
+          </div>
+
+          <div className="relative mb-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/20" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-transparent px-2 text-white/50">or continue with email</span>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">

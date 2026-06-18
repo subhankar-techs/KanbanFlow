@@ -28,9 +28,10 @@ DROP TABLE IF EXISTS public.profiles CASCADE;
 
 CREATE TABLE public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email VARCHAR(320) NOT NULL,
+  email VARCHAR(320) NOT NULL UNIQUE,
   name VARCHAR(255),
   avatar_url TEXT,
+  auth_provider VARCHAR(20) NOT NULL DEFAULT 'email',
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -118,14 +119,25 @@ CREATE INDEX idx_profiles_email ON public.profiles(email);
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, name, avatar_url)
+  INSERT INTO public.profiles (id, email, name, avatar_url, auth_provider)
   VALUES (
     NEW.id,
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
-    NEW.raw_user_meta_data->>'avatar_url'
+    COALESCE(
+      NEW.raw_user_meta_data->>'full_name',
+      NEW.raw_user_meta_data->>'name',
+      split_part(NEW.email, '@', 1)
+    ),
+    NEW.raw_user_meta_data->>'avatar_url',
+    CASE
+      WHEN NEW.raw_app_meta_data->>'provider' = 'google' THEN 'google'
+      ELSE 'email'
+    END
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    name = COALESCE(EXCLUDED.name, public.profiles.name),
+    avatar_url = COALESCE(EXCLUDED.avatar_url, public.profiles.avatar_url);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -293,11 +305,30 @@ CREATE POLICY "activity_log_insert" ON public.activity_log FOR INSERT
 -- ============================================================
 -- Backfill profiles for existing auth users
 -- ============================================================
-INSERT INTO public.profiles (id, email, name, avatar_url)
+INSERT INTO public.profiles (id, email, name, avatar_url, auth_provider)
 SELECT
   id,
   email,
   COALESCE(raw_user_meta_data->>'full_name', raw_user_meta_data->>'name', split_part(email, '@', 1)),
-  raw_user_meta_data->>'avatar_url'
+  raw_user_meta_data->>'avatar_url',
+  CASE
+    WHEN raw_app_meta_data->>'provider' = 'google' THEN 'google'
+    ELSE 'email'
+  END
 FROM auth.users
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- RPC: Check provider for a given email (SECURITY DEFINER
+-- so it bypasses RLS — used by auth callback & signup)
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.get_provider_for_email(lookup_email TEXT)
+RETURNS TABLE(auth_provider VARCHAR, user_id UUID) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT p.auth_provider, p.id
+  FROM public.profiles p
+  WHERE p.email = lookup_email
+  LIMIT 1;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

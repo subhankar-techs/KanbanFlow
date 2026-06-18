@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, User, Loader2, CheckCircle2 } from "lucide-react";
+import { GoogleButton } from "@/components/ui/google-button";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
@@ -26,21 +27,50 @@ export default function SignUpPage() {
     }
 
     setLoading(true);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: name } },
-    });
 
-    if (error) {
-      setError(error.message);
+    try {
+      const supabase = createClient();
+
+      // ── Check if email is already registered via Google ──
+      const { data: providerData } = await supabase.rpc("get_provider_for_email", {
+        lookup_email: email,
+      });
+
+      if (providerData && providerData.length > 0) {
+        if (providerData[0].auth_provider === "google") {
+          setError(
+            'This email is already registered with Google. Please sign in using "Continue with Google".'
+          );
+          setLoading(false);
+          return;
+        }
+        // If already registered with email, Supabase will return its own error on signUp
+      }
+
+      // ── Proceed with email/password signup ──
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: name } },
+      });
+
+      if (error) {
+        // Make common Supabase errors more user-friendly
+        if (error.message.includes("already registered")) {
+          setError("This email is already registered. Please sign in instead.");
+        } else {
+          setError(error.message);
+        }
+        setLoading(false);
+        return;
+      }
+
+      setSuccess(true);
       setLoading(false);
-      return;
+    } catch {
+      setError("Network error. Please check your connection and try again.");
+      setLoading(false);
     }
-
-    setSuccess(true);
-    setLoading(false);
   };
 
   return (
@@ -76,6 +106,19 @@ export default function SignUpPage() {
                   {error}
                 </div>
               )}
+
+              <div className="mb-4">
+                <GoogleButton onError={(msg) => setError(msg)} />
+              </div>
+
+              <div className="relative mb-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/20" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-transparent px-2 text-white/50">or continue with email</span>
+                </div>
+              </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">

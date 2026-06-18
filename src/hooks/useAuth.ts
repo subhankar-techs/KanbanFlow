@@ -43,6 +43,7 @@ export function useAuth() {
           email: user.email ?? "",
           name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split("@")[0] ?? "",
           avatar_url: user.user_metadata?.avatar_url ?? null,
+          auth_provider: user.app_metadata?.provider === "google" ? "google" as const : "email" as const,
         },
         { onConflict: "id" }
       )
@@ -61,6 +62,7 @@ export function useAuth() {
       email: user.email ?? "",
       name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split("@")[0] ?? "",
       avatar_url: user.user_metadata?.avatar_url ?? null,
+      auth_provider: user.app_metadata?.provider === "google" ? "google" as const : "email" as const,
       created_at: user.created_at ?? new Date().toISOString(),
     });
   }, [user]);
