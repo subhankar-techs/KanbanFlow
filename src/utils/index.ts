@@ -116,7 +116,10 @@ export function safeNextPath(next: string | null | undefined, fallback = "/dashb
   const base = "https://internal.invalid";
   try {
     const url = new URL(next, base);
-    return url.origin === base ? url.pathname + url.search + url.hash : fallback;
+    if (url.origin !== base) return fallback;
+    // Re-check after normalization: dot segments can turn "/.//evil.com" into "//evil.com"
+    const path = url.pathname + url.search + url.hash;
+    return path.startsWith("//") || path.startsWith("/\\") ? fallback : path;
   } catch {
     return fallback;
   }
