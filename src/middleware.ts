@@ -2,7 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { rateLimitRequest } from "@/lib/rate-limit";
 
-const PUBLIC_ROUTES = ["/", "/sign-in", "/sign-up", "/forgot-password", "/auth/callback"];
+// /api/mcp authenticates with its own bearer token
+const PUBLIC_ROUTES = ["/", "/sign-in", "/sign-up", "/forgot-password", "/auth/callback", "/api/mcp"];
 
 export async function middleware(request: NextRequest) {
   const rateLimitResponse = rateLimitRequest(request);

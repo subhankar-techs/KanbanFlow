@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, Search, Moon, Sun, LogOut, User } from "lucide-react";
+import { Menu, Search, Moon, Sun, LogOut, User, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useUIStore } from "@/store/uiStore";
 import { useMobileSidebar } from "@/components/layout/Sidebar";
+import { ConnectAIDialog } from "@/components/layout/ConnectAIDialog";
 import { getInitials } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuLabel,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 
 /* ---------- Breadcrumb helper ---------- */
@@ -42,6 +45,7 @@ export function Header() {
   const { user, profile, signOut } = useAuth();
   const { theme, setTheme } = useUIStore();
   const { setOpen } = useMobileSidebar();
+  const [aiOpen, setAiOpen] = useState(false);
 
   const isDark =
     theme === "dark" ||
@@ -122,16 +126,18 @@ export function Header() {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" sideOffset={8} className="w-56">
-          <DropdownMenuLabel>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium">
-                {profile?.name ?? "User"}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {profile?.email}
-              </span>
-            </div>
-          </DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium">
+                  {profile?.name ?? "User"}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {profile?.email}
+                </span>
+              </div>
+            </DropdownMenuLabel>
+          </DropdownMenuGroup>
 
           <DropdownMenuSeparator />
 
@@ -151,6 +157,11 @@ export function Header() {
             {isDark ? "Light mode" : "Dark mode"}
           </DropdownMenuItem>
 
+          <DropdownMenuItem onClick={() => setAiOpen(true)}>
+            <Bot className="size-4" />
+            Connect AI
+          </DropdownMenuItem>
+
           <DropdownMenuSeparator />
 
           <DropdownMenuItem variant="destructive" onClick={signOut}>
@@ -159,6 +170,8 @@ export function Header() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {user && aiOpen && <ConnectAIDialog userId={user.id} onOpenChange={setAiOpen} />}
     </header>
   );
 }

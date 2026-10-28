@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-const uuid = z.string().uuid("Invalid ID format");
+export const uuid = z.string().uuid("Invalid ID format");
 
 const supabaseUserId = z.string().uuid("Invalid user ID format");
 
-const safeText = (maxLen: number) =>
+export const safeText = (maxLen: number) =>
   z
     .string()
     .max(maxLen, `Must be ${maxLen} characters or less`)

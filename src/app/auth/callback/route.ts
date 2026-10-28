@@ -3,7 +3,13 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const url = new URL(request.url);
+  const { searchParams } = url;
+  // Dev server normalizes request.url's host to localhost; keep the Host the browser used.
+  // Forwarding headers are deliberately not trusted for this redirect.
+  const host = request.headers.get("host");
+  if (host) url.host = host;
+  const origin = url.origin;
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
 
