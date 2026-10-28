@@ -106,3 +106,18 @@ export function reorderPositions<T extends { id: string; position: number }>(
     position: index,
   }));
 }
+
+/**
+ * Return `next` only if it is a same-site path (blocks open redirects like "//evil.com" or "@evil.com")
+ */
+export function safeNextPath(next: string | null | undefined, fallback = "/dashboard"): string {
+  // Control chars and backslashes get normalized by browsers ("/\t/evil.com" -> "//evil.com")
+  if (!next || !next.startsWith("/") || next.startsWith("//") || /[\u0000-\u001F\\]/.test(next)) return fallback;
+  const base = "https://internal.invalid";
+  try {
+    const url = new URL(next, base);
+    return url.origin === base ? url.pathname + url.search + url.hash : fallback;
+  } catch {
+    return fallback;
+  }
+}

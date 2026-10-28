@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { safeNextPath } from "@/utils";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
   if (host) url.host = host;
   const origin = url.origin;
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = safeNextPath(searchParams.get("next"));
 
   // ── Handle OAuth errors from Supabase (e.g. user cancelled) ──
   const oauthError = searchParams.get("error");

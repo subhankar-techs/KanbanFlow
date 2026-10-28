@@ -17,10 +17,13 @@ export function GoogleButton({ onError }: GoogleButtonProps) {
 
     try {
       const supabase = createClient();
+      const next = new URLSearchParams(window.location.search).get("next");
+      const callback = new URL("/auth/callback", window.location.origin);
+      if (next) callback.searchParams.set("next", next);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: callback.toString(),
           queryParams: {
             prompt: "select_account",
           },

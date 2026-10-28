@@ -201,12 +201,21 @@ const authHandler = withMcpAuth(
   handler,
   async (_req, token) => {
     if (!token) return undefined;
-    const tokenHash = createHash("sha256").update(token).digest("hex");
-    const { data } = await db().from("api_tokens").select("user_id").eq("token_hash", tokenHash).maybeSingle();
-    if (!data) return undefined;
-    return { token, clientId: "kanbanflow-api-token", scopes: [], extra: { userId: data.user_id } };
+
+    // Personal API token (Claude Code, Gemini CLI, Cursor...)
+    if (token.startsWith("kf_")) {
+      const tokenHash = createHash("sha256").update(token).digest("hex");
+      const { data } = await db().from("api_tokens").select("user_id").eq("token_hash", tokenHash).maybeSingle();
+      if (!data) return undefined;
+      return { token, clientId: "kanbanflow-api-token", scopes: [], extra: { userId: data.user_id } };
+    }
+
+    // Supabase OAuth access token (claude.ai connectors); getUser verifies it with Supabase Auth
+    const { data } = await db().auth.getUser(token);
+    if (!data.user) return undefined;
+    return { token, clientId: "supabase-oauth", scopes: [], extra: { userId: data.user.id } };
   },
-  { required: true }
+  { required: true, resourceMetadataPath: "/.well-known/oauth-protected-resource/api/mcp" }
 );
 
 export { authHandler as GET, authHandler as POST };

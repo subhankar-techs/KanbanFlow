@@ -2,8 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { rateLimitRequest } from "@/lib/rate-limit";
 
-// /api/mcp authenticates with its own bearer token
-const PUBLIC_ROUTES = ["/", "/sign-in", "/sign-up", "/forgot-password", "/auth/callback", "/api/mcp"];
+// /api/mcp authenticates with its own bearer token; /.well-known serves OAuth discovery docs
+const PUBLIC_ROUTES = ["/", "/sign-in", "/sign-up", "/forgot-password", "/auth/callback", "/api/mcp", "/.well-known"];
 
 export async function middleware(request: NextRequest) {
   const rateLimitResponse = rateLimitRequest(request);
@@ -40,6 +40,8 @@ export async function middleware(request: NextRequest) {
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/sign-in";
+    url.search = "";
+    url.searchParams.set("next", pathname + request.nextUrl.search);
     return NextResponse.redirect(url);
   }
 

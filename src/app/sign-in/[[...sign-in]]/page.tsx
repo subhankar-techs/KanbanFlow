@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, Loader2 } from "lucide-react";
 import { GoogleButton } from "@/components/ui/google-button";
+import { safeNextPath } from "@/utils";
 
 // Maps URL error codes from auth callback to user-friendly messages
 const ERROR_MESSAGES: Record<string, string> = {
@@ -76,7 +77,7 @@ export default function SignInPage() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push(safeNextPath(new URLSearchParams(window.location.search).get("next")));
       router.refresh();
     } catch {
       setError("Network error. Please check your connection and try again.");
